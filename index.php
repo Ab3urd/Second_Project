@@ -674,6 +674,24 @@ if(file_exists("mytestfile.txt")) {
   die("Error: The file does not exist.");
 }
 ?>
+
+
+<?php
+use PHPUnit\Framework\TestCase;
+
+class indexTest extends TestCase
+{
+    public function testAddOperands()
+    {
+        $calculator = new \App\Calculator;
+        $calculator->setOperands([5, 10]);
+        $this->assertEquals(15, $calculator->add());
+    }
+}
+
+
+
+
 </body>
 
 </html>
