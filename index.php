@@ -676,19 +676,84 @@ if(file_exists("mytestfile.txt")) {
 ?>
 
 
-<?php
-use PHPUnit\Framework\TestCase;
 
-class indexTest extends TestCase
+<?php
+
+function myErrorHandler($errno, $errstr, $errfile, $errline)
 {
-    public function testAddOperands()
-    {
-        $calculator = new \App\Calculator;
-        $calculator->setOperands([5, 10]);
-        $this->assertEquals(15, $calculator->add());
+    if (!(error_reporting() & $errno)) {
+        return false;
     }
+
+    $errstr = htmlspecialchars($errstr);
+
+    switch ($errno) {
+    case E_USER_ERROR:
+        echo "<b>My ERROR</b> [$errno] $errstr<br />\n";
+        echo "  Fatal error on line $errline in file $errfile";
+        echo ", PHP " . PHP_VERSION . " (" . PHP_OS . ")<br />\n";
+        echo "Aborting...<br />\n";
+        exit(1);
+
+    case E_USER_WARNING:
+        echo "<b>My WARNING</b> [$errno] $errstr<br />\n";
+        break;
+
+    case E_USER_NOTICE:
+        echo "<b>My NOTICE</b> [$errno] $errstr<br />\n";
+        break;
+
+    default:
+        echo "Unknown error type: [$errno] $errstr<br />\n";
+        break;
+    }
+
+    return true;
 }
 
+function scale_by_log($vect, $scale)
+{
+    if (!is_numeric($scale) || $scale <= 0) {
+        trigger_error("log(x) for x <= 0 is undefined, you used: scale = $scale", E_USER_ERROR);
+    }
+
+    if (!is_array($vect)) {
+        trigger_error("Incorrect input vector, array of values expected", E_USER_WARNING);
+        return null;
+    }
+
+    $temp = array();
+    foreach($vect as $pos => $value) {
+        if (!is_numeric($value)) {
+            trigger_error("Value at position $pos is not a number, using 0 (zero)", E_USER_NOTICE);
+            $value = 0;
+        }
+        $temp[$pos] = log($scale) * $value;
+    }
+
+    return $temp;
+}
+
+$old_error_handler = set_error_handler("myErrorHandler");
+
+
+echo "vector a\n";
+$a = array(2, 3, "foo", 5.5, 43.3, 21.11);
+print_r($a);
+
+echo "----\nvector b - a notice (b = log(PI) * a)\n";
+$b = scale_by_log($a, M_PI);
+print_r($b);
+
+echo "----\nvector c - a warning\n";
+$c = scale_by_log("not array", 2.3);
+var_dump($c); 
+
+
+echo "----\nvector d - fatal error\n";
+$d = scale_by_log($a, -2.5);
+var_dump($d); 
+?>
 
 
 
